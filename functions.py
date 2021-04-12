@@ -15,7 +15,7 @@ from models import RepositoryInfo
 current_path = os.path.dirname(os.path.realpath(__file__))
 
 
-def retrieve_repos() -> Dict:
+def retrieve_repositories() -> Dict:
     repositories_info: Dict = _read_local()
 
     if _should_refresh_repos(repositories_info) or not repositories_info:
@@ -63,24 +63,20 @@ def _should_refresh_repos(local_data: Dict) -> bool:
 
 def _get_all_repositories() -> List[RepositoryInfo]:
     base_url: str = "https://api.github.com/search/repositories"
-    repositoryInfos: List[RepositoryInfo] = []
+    repository_infos: List[RepositoryInfo] = []
     for index in count(1):
         url: str = f"{base_url}?q=stars:>1000&good-first-issues:>5&page={index}&per_page=200"
+        headers: Dict = {"headers": f"token {GITHUB_TOKEN}"}
         try:
-            repositoryInfos.extend(_get_repositories(url))
+            response: requests.Response = requests.get(url, headers=headers)
+            response.raise_for_status()
         except Exception:
-            return repositoryInfos
-    return repositoryInfos
+            return repository_infos
+        retrieved_repositories: List[Dict] = response.json().get("items", [])
 
+        repository_infos.extend([
+            from_dict(RepositoryInfo, repository, config=Config(check_types=False))
+            for repository in retrieved_repositories
+        ])
 
-def _get_repositories(url: str) -> List[RepositoryInfo]:
-    headers: Dict = {"headers": f"token {GITHUB_TOKEN}"}
-
-    response: requests.Response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    retrieved_repositories: List[Dict] = response.json().get("items", [])
-
-    return [
-        from_dict(RepositoryInfo, repository, config=Config(check_types=False))
-        for repository in retrieved_repositories
-    ]
+    return repository_infos

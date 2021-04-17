@@ -65,7 +65,9 @@ def _get_all_repositories() -> List[RepositoryInfo]:
     base_url: str = "https://api.github.com/search/repositories"
     repository_infos: List[RepositoryInfo] = []
     for index in count(1):
-        url: str = f"{base_url}?q=stars:>1000&good-first-issues:>5&page={index}&per_page=200"
+        url: str = (
+            f"{base_url}?q=stars:>1000&good-first-issues:>5&page={index}&per_page=200"
+        )
         headers: Dict = {"headers": f"token {GITHUB_TOKEN}"}
         try:
             response: requests.Response = requests.get(url, headers=headers)
@@ -74,9 +76,11 @@ def _get_all_repositories() -> List[RepositoryInfo]:
             return repository_infos
         retrieved_repositories: List[Dict] = response.json().get("items", [])
 
-        repository_infos.extend([
-            from_dict(RepositoryInfo, repository, config=Config(check_types=False))
-            for repository in retrieved_repositories
-        ])
+        repository_infos.extend(
+            [
+                from_dict(RepositoryInfo, repository, config=Config(check_types=False))
+                for repository in retrieved_repositories
+            ]
+        )
 
     return repository_infos

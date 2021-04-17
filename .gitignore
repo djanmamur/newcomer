@@ -1,6 +1,6 @@
 /env
 __pycache__/
-*/__pycache__/
+api/__pycache__/
 .idea
 .env
 latest_data.json
